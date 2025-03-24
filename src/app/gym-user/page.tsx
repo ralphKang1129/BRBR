@@ -53,8 +53,8 @@ export default function GymUserDashboard() {
               <Image 
                 src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
                 alt="배드민턴 코트"
-                layout="fill"
-                objectFit="cover"
+                fill
+                className="object-cover"
               />
             </div>
             <div className="p-6 flex-1">
@@ -76,8 +76,8 @@ export default function GymUserDashboard() {
               <Image 
                 src="https://images.unsplash.com/photo-1521537634581-0dced2fee2ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
                 alt="예약 확인"
-                layout="fill"
-                objectFit="cover"
+                fill
+                className="object-cover"
               />
             </div>
             <div className="p-6 flex-1">
@@ -99,8 +99,8 @@ export default function GymUserDashboard() {
               <Image 
                 src="https://images.unsplash.com/photo-1562088287-bde35a1ea917?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
                 alt="프로필 관리"
-                layout="fill"
-                objectFit="cover"
+                fill
+                className="object-cover"
               />
             </div>
             <div className="p-6 flex-1">
@@ -128,8 +128,8 @@ export default function GymUserDashboard() {
                   <Image 
                     src={`https://source.unsplash.com/random/800x600?badminton&sig=${idx}`}
                     alt={`추천 코트 ${idx + 1}`}
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
                 <div className="p-4">
