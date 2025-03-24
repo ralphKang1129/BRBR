@@ -38,10 +38,17 @@ export default function ReservationPage({ params }: PageProps) {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('card');
   const [newBookings, setNewBookings] = useState<any[]>([]);
+  const [court, setCourt] = useState<Court | undefined>(undefined);
+  const [isCourtLoading, setIsCourtLoading] = useState(true);
+  const [courtId, setCourtId] = useState<string>(params.id as string);
   
-  const court = MOCK_COURTS.find((c: Court) => c.id === params.id);
-  if (!court) return <div>코트를 찾을 수 없습니다.</div>;
-
+  // 코트 정보 로드
+  useEffect(() => {
+    const foundCourt = MOCK_COURTS.find((c: Court) => c.id === courtId);
+    setCourt(foundCourt);
+    setIsCourtLoading(false);
+  }, [courtId]);
+  
   // 실시간 시간 업데이트
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,6 +57,23 @@ export default function ReservationPage({ params }: PageProps) {
 
     return () => clearInterval(timer);
   }, []);
+
+  // 코트를 찾을 수 없는 경우
+  if (isCourtLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!court) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-gray-700">코트를 찾을 수 없습니다.</div>
+      </div>
+    );
+  }
 
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentDate, { weekStartsOn: 1 }), // 월요일부터 시작
@@ -61,7 +85,7 @@ export default function ReservationPage({ params }: PageProps) {
     const dateStr = format(date, 'yyyy-MM-dd');
     return MOCK_BOOKINGS.some(
       booking =>
-        booking.courtId === court.id &&
+        booking.courtId === courtId &&
         booking.date === dateStr &&
         hour >= booking.startHour &&
         hour < booking.endHour
@@ -202,7 +226,7 @@ export default function ReservationPage({ params }: PageProps) {
     const dateStr = format(date, 'yyyy-MM-dd');
     return MOCK_BOOKINGS.find(
       booking =>
-        booking.courtId === court.id &&
+        booking.courtId === courtId &&
         booking.date === dateStr &&
         hour >= booking.startHour &&
         hour < booking.endHour
@@ -228,7 +252,7 @@ export default function ReservationPage({ params }: PageProps) {
       // 예약 저장
       try {
         const createdBookings = saveBooking(
-          court.id,
+          courtId,
           selectedRanges,
           selectedPaymentMethod
         );
