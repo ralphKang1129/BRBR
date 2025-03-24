@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -17,7 +18,22 @@ export default function LoginPage() {
     password: '',
     form: '',
   });
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // URL 쿼리 파라미터에서 이메일과 비밀번호가 있으면 가져와서 설정
+  useEffect(() => {
+    const email = searchParams.get('email');
+    const password = searchParams.get('password');
+    
+    if (email) {
+      setFormData(prev => ({ ...prev, email }));
+    }
+    
+    if (password) {
+      setFormData(prev => ({ ...prev, password }));
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -30,6 +46,10 @@ export default function LoginPage() {
     if (errors.form) {
       setErrors((prev) => ({ ...prev, form: '' }));
     }
+  };
+
+  const handleRememberMeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRememberMe(e.target.checked);
   };
 
   const validate = () => {
@@ -65,7 +85,9 @@ export default function LoginPage() {
     setErrors({ ...errors, form: '' });
 
     try {
-      await login(formData.email, formData.password);
+      await login(formData.email, formData.password, rememberMe);
+      
+      // 로그인 성공 시 홈으로 이동
       router.push('/');
     } catch (error: any) {
       console.error('Login error:', error);
@@ -146,6 +168,8 @@ export default function LoginPage() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={handleRememberMeChange}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">

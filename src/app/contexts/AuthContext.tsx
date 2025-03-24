@@ -39,7 +39,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean; // 관리자 여부 추가
   isGymOwner: boolean; // 체육관대관자 여부 추가
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   signup: (data: SignupData) => Promise<void>;
   getUsers: () => Omit<User, 'password'>[];
@@ -88,13 +88,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // 로컬 스토리지에서 현재 사용자 정보 가져오기
-        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        // 사용자 정보 가져오기 (로컬 스토리지 또는 세션 스토리지)
+        let storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        
+        // 로컬 스토리지에 없으면 세션 스토리지 확인
+        if (!storedUser) {
+          storedUser = sessionStorage.getItem(USER_STORAGE_KEY);
+        }
+        
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
           // 비밀번호 필드는 클라이언트에 노출하지 않음
           const { password, ...userWithoutPassword } = parsedUser;
           setUser(userWithoutPassword);
+          setIsAuthenticated(true); // 저장된 사용자가 있으면 인증 상태를 true로 설정
         }
 
         // 로컬 스토리지에 사용자 배열이 없으면 초기화
@@ -124,6 +131,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           users.push(adminUser);
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+          
+          console.log('관리자 계정이 생성되었습니다:', adminUser);
         }
       } catch (error) {
         console.error('Error initializing auth context:', error);
@@ -150,7 +159,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // 로그인 함수
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     setIsLoading(true);
     try {
       // 로컬 스토리지에서 사용자 목록 가져오기
@@ -172,8 +181,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { password: _, ...userWithoutPassword } = foundUser;
       
       // 로컬 스토리지에 현재 사용자 정보 저장
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
+      // 로그인 상태 유지 설정에 따라 저장 방식 결정
+      if (rememberMe) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
+      } else {
+        // 세션 스토리지는 브라우저 닫으면 삭제됨
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
+        // 기존 로컬 스토리지 데이터는 삭제
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
+      
       setUser(userWithoutPassword);
+      setIsAuthenticated(true); // 로그인 성공 시 인증 상태를 true로 설정
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -184,8 +203,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 로그아웃 함수
   const logout = () => {
+    // 로컬 스토리지와 세션 스토리지 모두에서 사용자 정보 삭제
     localStorage.removeItem(USER_STORAGE_KEY);
+    sessionStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
+    setIsAuthenticated(false); // 로그아웃 시 인증 상태를 false로 설정
   };
 
   // 회원가입 함수
