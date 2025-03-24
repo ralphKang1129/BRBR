@@ -48,13 +48,16 @@ export default function GymOwnerGymsPage() {
   ];
 
   useEffect(() => {
-    // 로그인되지 않은 사용자는 로그인 페이지로 리디렉션
+    // 인증 로딩이 완료될 때까지 대기
+    if (isLoading) return;
+    
+    // 로딩이 완료되고, 인증되지 않은 사용자는 로그인 페이지로 리디렉션
     if (!isAuthenticated) {
       router.push('/auth/login?redirect=/gym-owner/gyms');
       return;
     }
 
-    // 체육관 대관자가 아닌 사용자는 홈으로 리디렉션
+    // 로딩이 완료되고, 체육관 대관자가 아닌 사용자는 홈으로 리디렉션
     if (!isGymOwner) {
       router.push('/');
       return;
@@ -73,7 +76,7 @@ export default function GymOwnerGymsPage() {
     };
 
     loadGyms();
-  }, [isAuthenticated, isGymOwner, router]);
+  }, [isLoading, isAuthenticated, isGymOwner, router]);
 
   // 새 체육관 등록 폼
   const [formData, setFormData] = useState({

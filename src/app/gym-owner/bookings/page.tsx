@@ -30,8 +30,8 @@ interface Booking {
 
 export default function GymOwnerBookingsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isGymOwner } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isAuthenticated, isLoading, isGymOwner } = useAuth();
+  const [pageLoading, setPageLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<{
     gymId: string | null;
@@ -144,13 +144,16 @@ export default function GymOwnerBookingsPage() {
   ];
 
   useEffect(() => {
-    // 로그인되지 않은 사용자는 로그인 페이지로 리디렉션
+    // 인증 로딩이 완료될 때까지 대기
+    if (isLoading) return;
+    
+    // 로딩이 완료되고, 인증되지 않은 사용자는 로그인 페이지로 리디렉션
     if (!isAuthenticated) {
       router.push('/auth/login?redirect=/gym-owner/bookings');
       return;
     }
 
-    // 체육관 대관자가 아닌 사용자는 홈으로 리디렉션
+    // 로딩이 완료되고, 체육관 대관자가 아닌 사용자는 홈으로 리디렉션
     if (!isGymOwner) {
       router.push('/');
       return;
@@ -164,12 +167,12 @@ export default function GymOwnerBookingsPage() {
       } catch (error) {
         console.error('Failed to load bookings:', error);
       } finally {
-        setIsLoading(false);
+        setPageLoading(false);
       }
     };
 
     loadBookings();
-  }, [isAuthenticated, isGymOwner, router]);
+  }, [isLoading, isAuthenticated, isGymOwner, router]);
 
   // 예약 상태별 색상 클래스 반환
   const getStatusColorClass = (status: BookingStatus) => {
@@ -229,7 +232,7 @@ export default function GymOwnerBookingsPage() {
     ));
   };
 
-  if (isLoading) {
+  if (pageLoading || isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

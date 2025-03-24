@@ -28,8 +28,8 @@ interface MonthlySummary {
 
 export default function GymOwnerRevenuePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isGymOwner } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isAuthenticated, isLoading, isGymOwner } = useAuth();
+  const [pageLoading, setPageLoading] = useState(true);
   const [selectedGym, setSelectedGym] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('monthly'); // monthly, weekly, daily
   const [revenueData, setRevenueData] = useState<RevenueItem[]>([]);
@@ -176,13 +176,16 @@ export default function GymOwnerRevenuePage() {
   };
 
   useEffect(() => {
-    // 로그인되지 않은 사용자는 로그인 페이지로 리디렉션
+    // 인증 로딩이 완료될 때까지 대기
+    if (isLoading) return;
+    
+    // 로딩이 완료되고, 인증되지 않은 사용자는 로그인 페이지로 리디렉션
     if (!isAuthenticated) {
       router.push('/auth/login?redirect=/gym-owner/revenue');
       return;
     }
 
-    // 체육관 대관자가 아닌 사용자는 홈으로 리디렉션
+    // 로딩이 완료되고, 체육관 대관자가 아닌 사용자는 홈으로 리디렉션
     if (!isGymOwner) {
       router.push('/');
       return;
@@ -197,12 +200,12 @@ export default function GymOwnerRevenuePage() {
       } catch (error) {
         console.error('Failed to load revenue data:', error);
       } finally {
-        setIsLoading(false);
+        setPageLoading(false);
       }
     };
 
     loadRevenueData();
-  }, [isAuthenticated, isGymOwner, router]);
+  }, [isLoading, isAuthenticated, isGymOwner, router]);
 
   // 필터링된 매출 데이터
   const filteredRevenueData = revenueData.filter(item => {
@@ -225,7 +228,7 @@ export default function GymOwnerRevenuePage() {
     .filter(item => item.status === 'PENDING')
     .reduce((total, item) => total + item.amount, 0);
 
-  if (isLoading) {
+  if (pageLoading || isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
