@@ -8,12 +8,28 @@ export type UserType = 'ADMIN' | 'GYM_OWNER' | 'GYM_USER';
 export interface User {
   id: string;
   email: string;
+  password: string;
   name: string;
   phone?: string;
-  password: string; // 실제 환경에서는 클라이언트에 비밀번호를 저장하면 안 됨
   createdAt: string;
-  isAdmin: boolean; // 관리자 여부 추가
-  userType: UserType; // 사용자 타입 추가: 관리자, 체육관대관자, 체육관사용자
+  isAdmin: boolean;
+  userType: UserType;
+  // 체육관 대관자 관련 필드 추가
+  gymAddress?: string;
+  businessLicenseImage?: string;
+  isVerified?: boolean; // 체육관 대관자 검증 여부
+}
+
+// 회원가입 시 사용할 데이터 타입
+export interface SignupData {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  userType: UserType;
+  // 체육관 대관자 관련 필드 추가
+  gymAddress?: string;
+  businessLicenseImage?: string;
 }
 
 // 인증 컨텍스트 타입 정의
@@ -25,7 +41,7 @@ interface AuthContextType {
   isGymOwner: boolean; // 체육관대관자 여부 추가
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  signup: (userData: { email: string; password: string; name: string; phone?: string; userType: UserType }) => Promise<void>;
+  signup: (data: SignupData) => Promise<void>;
   getUsers: () => Omit<User, 'password'>[];
 }
 
@@ -60,6 +76,7 @@ const ADMIN_PASSWORD = 'admin';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // 현재 사용자가 관리자인지 확인
   const isAdmin = user?.isAdmin || false;
@@ -172,42 +189,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // 회원가입 함수
-  const signup = async (userData: { email: string; password: string; name: string; phone?: string; userType: UserType }) => {
+  const signup = async (data: SignupData): Promise<void> => {
     setIsLoading(true);
     try {
-      // 로컬 스토리지에서 사용자 목록 가져오기
-      const usersString = localStorage.getItem(USERS_STORAGE_KEY);
-      if (!usersString) {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
+      // 계정이 존재하는지 확인
+      const users = getUsers();
+      if (users.some(user => user.email === data.email)) {
+        throw new Error('이미 등록된 이메일입니다.');
       }
 
-      const users: User[] = usersString ? JSON.parse(usersString) : [];
-      
-      // 이메일 중복 확인 (admin은 중복 검사에서 제외)
-      if (userData.email !== ADMIN_EMAIL && users.some(u => u.email === userData.email)) {
-        throw new Error('이미 사용 중인 이메일입니다.');
-      }
-      
-      // 새 사용자 생성
+      // 새 사용자 객체 생성
       const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9), // 임시 ID 생성, 실제로는 서버에서 생성된 ID 사용
-        email: userData.email,
-        name: userData.name,
-        password: userData.password, // 실제로는 서버에서 암호화하여 저장
-        phone: userData.phone,
+        id: Date.now().toString(),
+        email: data.email,
+        password: data.password, // 실제로는 해싱 처리
+        name: data.name,
+        phone: data.phone,
         createdAt: new Date().toISOString(),
-        isAdmin: userData.email === ADMIN_EMAIL, // admin 계정인 경우 관리자 권한 부여
-        userType: userData.email === ADMIN_EMAIL ? 'ADMIN' : userData.userType // 사용자 타입 설정
+        isAdmin: data.email === 'admin', // admin 계정은 관리자 권한 부여
+        userType: data.userType,
+        // 체육관 대관자 관련 필드 추가
+        gymAddress: data.gymAddress,
+        businessLicenseImage: data.businessLicenseImage,
+        isVerified: false, // 기본값은 미검증 상태
       };
-      
-      // 사용자 목록에 추가
+
+      // 사용자 저장
       users.push(newUser);
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-      
-      // 로그인 처리 (비밀번호 제외)
+
+      // 세션 설정 및 상태 업데이트
       const { password, ...userWithoutPassword } = newUser;
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
-      setUser(userWithoutPassword);
+      setUser(userWithoutPassword as User);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('Signup failed:', error);
       throw error;
@@ -219,7 +234,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // 컨텍스트 값
   const value = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     isLoading,
     isAdmin,
     isGymOwner,

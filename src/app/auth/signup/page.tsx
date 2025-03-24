@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, UserType } from '../../contexts/AuthContext';
@@ -15,6 +15,9 @@ export default function SignupPage() {
     name: '',
     phone: '',
     userType: 'GYM_USER' as UserType, // 기본값은 체육관사용자
+    // 체육관 대관자 관련 필드 추가
+    gymAddress: '',
+    businessLicenseImage: null as File | null,
   });
   const [errors, setErrors] = useState({
     email: '',
@@ -23,11 +26,14 @@ export default function SignupPage() {
     name: '',
     phone: '',
     userType: '',
+    gymAddress: '',
+    businessLicenseImage: '',
     form: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [selectedUserType, setSelectedUserType] = useState<UserType>('GYM_USER');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // 사용자 타입 설명 텍스트
   const userTypeDescriptions = {
@@ -35,12 +41,33 @@ export default function SignupPage() {
     GYM_USER: '체육관을 예약하고 사용하고 싶은 분',
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     // 입력 시 해당 필드의 에러 지우기
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  // 파일 업로드 핸들러
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      // 파일 크기 제한 (예: 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, businessLicenseImage: '파일 크기는 5MB 이하여야 합니다' }));
+        return;
+      }
+      
+      // 파일 형식 제한 (이미지만 허용)
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, businessLicenseImage: '이미지 파일만 업로드 가능합니다' }));
+        return;
+      }
+      
+      setFormData(prev => ({ ...prev, businessLicenseImage: file }));
+      setErrors(prev => ({ ...prev, businessLicenseImage: '' }));
     }
   };
 
@@ -112,6 +139,19 @@ export default function SignupPage() {
       valid = false;
     }
 
+    // 체육관 대관자인 경우 추가 필드 검증
+    if (selectedUserType === 'GYM_OWNER') {
+      if (!formData.gymAddress) {
+        newErrors.gymAddress = '체육관 주소를 입력해주세요';
+        valid = false;
+      }
+      
+      if (!formData.businessLicenseImage) {
+        newErrors.businessLicenseImage = '사업자 등록증을 첨부해주세요';
+        valid = false;
+      }
+    }
+
     setErrors(newErrors);
     return valid;
   };
@@ -125,12 +165,22 @@ export default function SignupPage() {
     setErrors({ ...errors, form: '' });
 
     try {
+      // 체육관 대관자인 경우 사업자 등록증 이미지를 Base64로 변환
+      let businessLicenseBase64 = '';
+      if (formData.userType === 'GYM_OWNER' && formData.businessLicenseImage) {
+        businessLicenseBase64 = await convertFileToBase64(formData.businessLicenseImage);
+      }
+      
       await signup({
         email: formData.email,
         password: formData.password,
         name: formData.name,
         phone: formData.phone,
         userType: formData.userType,
+        // 추가 정보를 AuthContext에 전달하기 위해 확장합니다
+        // 실제 구현에서는 AuthContext의 signup 함수와 User 인터페이스도 수정해야 합니다
+        gymAddress: formData.gymAddress,
+        businessLicenseImage: businessLicenseBase64,
       });
       
       // 회원가입 성공 후 홈페이지로 이동
@@ -144,6 +194,16 @@ export default function SignupPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 파일을 Base64 문자열로 변환하는 함수
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   };
 
   const handleEmailBlur = () => {
@@ -367,6 +427,92 @@ export default function SignupPage() {
                 )}
               </div>
             </div>
+
+            {/* 체육관 대관자일 경우 추가 필드 */}
+            {selectedUserType === 'GYM_OWNER' && (
+              <>
+                <div>
+                  <label htmlFor="gymAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    체육관 주소
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="gymAddress"
+                      name="gymAddress"
+                      rows={3}
+                      required
+                      value={formData.gymAddress}
+                      onChange={handleChange}
+                      className={`appearance-none block w-full px-3 py-2 border ${
+                        errors.gymAddress ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'
+                      } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+                      placeholder="체육관 주소를 정확히 입력해주세요"
+                    />
+                    {errors.gymAddress && (
+                      <p className="mt-1 text-sm text-red-600">{errors.gymAddress}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    사업자등록증 첨부
+                  </label>
+                  <div className="mt-1">
+                    <div className="flex items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
+                      <div className="space-y-1 text-center">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                          <label
+                            htmlFor="businessLicenseImage"
+                            className="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none"
+                          >
+                            <span>파일 업로드</span>
+                            <input
+                              id="businessLicenseImage"
+                              ref={fileInputRef}
+                              name="businessLicenseImage"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={handleFileChange}
+                            />
+                          </label>
+                          <p className="pl-1">또는 끌어서 놓기</p>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          PNG, JPG, GIF 최대 5MB
+                        </p>
+                      </div>
+                    </div>
+                    {formData.businessLicenseImage && (
+                      <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                        선택된 파일: {formData.businessLicenseImage.name}
+                      </div>
+                    )}
+                    {errors.businessLicenseImage && (
+                      <p className="mt-1 text-sm text-red-600">{errors.businessLicenseImage}</p>
+                    )}
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      * 사업자등록증은 검증 후 승인이 완료되면 체육관을 등록할 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div>
               <button
