@@ -147,6 +147,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           console.log('관리자 계정이 생성되었습니다:', adminUser);
         }
+        
+        // 체육관 소유자 계정 확인 및 생성
+        const GYM_OWNER_EMAIL = 'gym_owner';
+        const GYM_OWNER_PASSWORD = 'gym_owner';
+        const gymOwnerExists = users.some(u => u.email === GYM_OWNER_EMAIL && u.userType === 'GYM_OWNER');
+        
+        if (!gymOwnerExists) {
+          // 체육관 소유자 계정 생성
+          const gymOwnerUser: User = {
+            id: 'gym-owner-id',
+            email: GYM_OWNER_EMAIL,
+            password: GYM_OWNER_PASSWORD,
+            name: '체육관 소유자',
+            phone: '010-1234-5678',
+            createdAt: new Date().toISOString(),
+            isAdmin: false,
+            userType: 'GYM_OWNER',
+            gymAddress: '서울시 강남구 테헤란로 123',
+            isVerified: true // 기본적으로 검증된 상태로 생성
+          };
+          
+          users.push(gymOwnerUser);
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+          
+          console.log('체육관 소유자 계정이 생성되었습니다:', gymOwnerUser);
+        }
       } catch (error) {
         console.error('Error initializing auth context:', error);
       } finally {

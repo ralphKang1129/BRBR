@@ -18,8 +18,8 @@ interface Gym {
 
 export default function GymOwnerGymsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isGymOwner } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isAuthenticated, isLoading, isGymOwner } = useAuth();
+  const [pageLoading, setPageLoading] = useState(true);
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   
@@ -71,7 +71,7 @@ export default function GymOwnerGymsPage() {
       } catch (error) {
         console.error('Failed to load gyms:', error);
       } finally {
-        setIsLoading(false);
+        setPageLoading(false);
       }
     };
 
@@ -110,7 +110,7 @@ export default function GymOwnerGymsPage() {
     setShowAddForm(false);
   };
 
-  if (isLoading) {
+  if (isLoading || pageLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -255,81 +255,80 @@ export default function GymOwnerGymsPage() {
         )}
 
         {/* 체육관 목록 */}
-        {gyms.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">등록된 체육관이 없습니다</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">새 체육관을 등록해주세요.</p>
-            <div className="mt-6">
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                새 체육관 등록
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {gyms.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {gyms.map((gym) => (
-              <div key={gym.id} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg flex flex-col">
-                <div className="h-48 overflow-hidden">
-                  <img
-                    className="w-full h-full object-cover"
-                    src={gym.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'}
-                    alt={gym.name}
-                  />
-                </div>
-                <div className="px-4 py-5 sm:p-6 flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                        {gym.name}
-                        {gym.isVerified ? (
-                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                            승인됨
-                          </span>
-                        ) : (
-                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-                            승인 대기중
-                          </span>
-                        )}
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {gym.address}
-                      </p>
+              <div key={gym.id} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{gym.name}</h3>
+                    {gym.isVerified ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        검증됨
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                        검증 대기중
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{gym.address}</p>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{gym.description}</p>
+                  <div className="mt-4 flex justify-between items-center">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      코트 수: <span className="font-medium">{gym.courtCount}</span>
                     </div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
-                      코트 {gym.courtCount}개
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    {gym.description}
-                  </p>
-                  <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                    등록일: {new Date(gym.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-4 sm:px-6">
-                  <div className="flex justify-between">
                     <Link
-                      href={`/gym-owner/gyms/${gym.id}/courts`}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      href={`/gym-owner/gyms/${gym.id}`}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 dark:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
                     >
-                      코트 관리
-                    </Link>
-                    <Link
-                      href={`/gym-owner/gyms/${gym.id}/edit`}
-                      className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      정보 수정
+                      상세 보기
                     </Link>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                vectorEffect="non-scaling-stroke"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">등록된 체육관이 없습니다</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">새 체육관을 등록하고 관리를 시작하세요.</p>
+            <div className="mt-6">
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <svg
+                  className="-ml-1 mr-2 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                새 체육관 등록
+              </button>
+            </div>
           </div>
         )}
       </div>
