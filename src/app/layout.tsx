@@ -4,6 +4,7 @@ import "./globals.css";
 import Link from "next/link";
 import AuthProvider from "./contexts/AuthContext";
 import AuthMenu from "./components/AuthMenu";
+import Navigation from "./components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,13 +38,10 @@ export default function RootLayout({
                 <div className="flex items-center">
                   <Link href="/" className="text-lg font-semibold text-blue-600">배드민턴 예약</Link>
                 </div>
-                <nav className="flex items-center">
-                  <ul className="flex space-x-8 mr-4">
-                    <li><Link href="/courts" className="text-gray-600 hover:text-blue-600">코트 찾기</Link></li>
-                    <li><Link href="/my-bookings" className="text-gray-600 hover:text-blue-600">내 예약</Link></li>
-                  </ul>
+                <div className="flex items-center">
+                  <Navigation />
                   <AuthMenu />
-                </nav>
+                </div>
               </div>
             </div>
           </header>
