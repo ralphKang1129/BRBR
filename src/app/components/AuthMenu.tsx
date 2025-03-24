@@ -42,13 +42,13 @@ export default function AuthMenu() {
           href="/auth/login" 
           className="text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
         >
-          Login
+          로그인
         </Link>
         <Link
           href="/auth/signup"
           className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
         >
-          Sign Up
+          회원가입
         </Link>
       </div>
     );
@@ -63,7 +63,7 @@ export default function AuthMenu() {
             className="flex items-center text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 focus:outline-none"
             onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
           >
-            <span className="mr-1">Admin</span>
+            <span className="mr-1">관리자</span>
             <svg
               className={`h-5 w-5 transition-transform ${isAdminMenuOpen ? 'rotate-180' : ''}`}
               xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +85,7 @@ export default function AuthMenu() {
                 className="block px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
                 onClick={() => setIsAdminMenuOpen(false)}
               >
-                User Management
+                사용자 관리
               </Link>
             </div>
           )}
@@ -98,10 +98,10 @@ export default function AuthMenu() {
           className="flex items-center text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
-          <span className="mr-1">{user?.name || 'User'}</span>
+          <span className="mr-1">{user?.name || '사용자'}</span>
           {isAdmin && (
             <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
-              Admin
+              관리자
             </span>
           )}
           <svg
@@ -124,7 +124,7 @@ export default function AuthMenu() {
               <div>{user?.name}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</div>
               {isAdmin && (
-                <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">Admin Account</div>
+                <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">관리자 계정</div>
               )}
             </div>
 
@@ -133,7 +133,7 @@ export default function AuthMenu() {
               className="block px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
               onClick={() => setIsMenuOpen(false)}
             >
-              My Bookings
+              내 예약
             </Link>
             
             <Link
@@ -141,14 +141,14 @@ export default function AuthMenu() {
               className="block px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
               onClick={() => setIsMenuOpen(false)}
             >
-              Profile Settings
+              프로필 설정
             </Link>
             
             <button
               onClick={handleLogout}
               className="block w-full text-left px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
             >
-              Logout
+              로그아웃
             </button>
           </div>
         )}
