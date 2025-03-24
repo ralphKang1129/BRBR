@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, UserType } from '../../contexts/AuthContext';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function SignupPage() {
     confirmPassword: '',
     name: '',
     phone: '',
+    userType: 'GYM_USER' as UserType, // 기본값은 체육관사용자
   });
   const [errors, setErrors] = useState({
     email: '',
@@ -21,10 +22,18 @@ export default function SignupPage() {
     confirmPassword: '',
     name: '',
     phone: '',
+    userType: '',
     form: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [selectedUserType, setSelectedUserType] = useState<UserType>('GYM_USER');
+  
+  // 사용자 타입 설명 텍스트
+  const userTypeDescriptions = {
+    GYM_OWNER: '체육관을 가지고 있어서 등록하고 싶은 분',
+    GYM_USER: '체육관을 예약하고 사용하고 싶은 분',
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,6 +41,15 @@ export default function SignupPage() {
     // 입력 시 해당 필드의 에러 지우기
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  // 사용자 타입 변경 핸들러
+  const handleUserTypeChange = (userType: UserType) => {
+    setSelectedUserType(userType);
+    setFormData(prev => ({ ...prev, userType }));
+    if (errors.userType) {
+      setErrors(prev => ({ ...prev, userType: '' }));
     }
   };
 
@@ -112,6 +130,7 @@ export default function SignupPage() {
         password: formData.password,
         name: formData.name,
         phone: formData.phone,
+        userType: formData.userType,
       });
       
       // 회원가입 성공 후 홈페이지로 이동
@@ -162,6 +181,62 @@ export default function SignupPage() {
               {errors.form}
             </div>
           )}
+          
+          {/* 사용자 유형 선택 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              가입 유형을 선택해주세요
+            </label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div 
+                className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 
+                  ${selectedUserType === 'GYM_USER' 
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500' 
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'}`}
+                onClick={() => handleUserTypeChange('GYM_USER')}
+              >
+                <div className="flex items-center">
+                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center 
+                    ${selectedUserType === 'GYM_USER' 
+                      ? 'border-blue-500' 
+                      : 'border-gray-400 dark:border-gray-500'}`}
+                  >
+                    {selectedUserType === 'GYM_USER' && (
+                      <div className="h-2.5 w-2.5 rounded-full bg-blue-500"></div>
+                    )}
+                  </div>
+                  <span className="ml-2 font-medium text-gray-900 dark:text-white">체육관 사용자</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {userTypeDescriptions.GYM_USER}
+                </p>
+              </div>
+              
+              <div 
+                className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 
+                  ${selectedUserType === 'GYM_OWNER' 
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500' 
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'}`}
+                onClick={() => handleUserTypeChange('GYM_OWNER')}
+              >
+                <div className="flex items-center">
+                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center
+                    ${selectedUserType === 'GYM_OWNER' 
+                      ? 'border-blue-500' 
+                      : 'border-gray-400 dark:border-gray-500'}`}
+                  >
+                    {selectedUserType === 'GYM_OWNER' && (
+                      <div className="h-2.5 w-2.5 rounded-full bg-blue-500"></div>
+                    )}
+                  </div>
+                  <span className="ml-2 font-medium text-gray-900 dark:text-white">체육관 대관자</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {userTypeDescriptions.GYM_OWNER}
+                </p>
+              </div>
+            </div>
+          </div>
           
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
@@ -306,13 +381,26 @@ export default function SignupPage() {
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              이미 계정이 있으신가요?{' '}
-              <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                로그인
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                  이미 계정이 있으신가요?
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Link
+                href="/auth/login"
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                로그인 하기
               </Link>
-            </p>
+            </div>
           </div>
         </div>
       </div>

@@ -58,6 +58,20 @@ export default function UsersListPage() {
     }
   };
 
+  // 사용자 타입 표시 함수 추가
+  const getUserTypeDisplay = (userType: string) => {
+    switch (userType) {
+      case 'ADMIN':
+        return '관리자';
+      case 'GYM_OWNER':
+        return '체육관대관자';
+      case 'GYM_USER':
+        return '체육관사용자';
+      default:
+        return '일반회원';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
@@ -154,7 +168,7 @@ export default function UsersListPage() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                     >
-                      권한
+                      사용자 타입
                     </th>
                   </tr>
                 </thead>
@@ -180,16 +194,14 @@ export default function UsersListPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {user.createdAt ? formatDate(user.createdAt) : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {user.isAdmin ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
-                            관리자
-                          </span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                            일반 사용자
-                          </span>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.userType === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                          user.userType === 'GYM_OWNER' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                          'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100'
+                        }`}>
+                          {getUserTypeDisplay(user.userType)}
+                        </span>
                       </td>
                     </tr>
                   ))}

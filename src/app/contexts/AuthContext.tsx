@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // 사용자 타입 정의
+export type UserType = 'ADMIN' | 'GYM_OWNER' | 'GYM_USER';
+
 export interface User {
   id: string;
   email: string;
@@ -11,6 +13,7 @@ export interface User {
   password: string; // 실제 환경에서는 클라이언트에 비밀번호를 저장하면 안 됨
   createdAt: string;
   isAdmin: boolean; // 관리자 여부 추가
+  userType: UserType; // 사용자 타입 추가: 관리자, 체육관대관자, 체육관사용자
 }
 
 // 인증 컨텍스트 타입 정의
@@ -19,9 +22,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean; // 관리자 여부 추가
+  isGymOwner: boolean; // 체육관대관자 여부 추가
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  signup: (userData: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
+  signup: (userData: { email: string; password: string; name: string; phone?: string; userType: UserType }) => Promise<void>;
   getUsers: () => Omit<User, 'password'>[];
 }
 
@@ -31,6 +35,7 @@ const initialAuthContext: AuthContextType = {
   isAuthenticated: false,
   isLoading: true,
   isAdmin: false, // 관리자 여부 초기값
+  isGymOwner: false, // 체육관대관자 여부 초기값
   login: async () => {},
   logout: () => {},
   signup: async () => {},
@@ -58,6 +63,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 현재 사용자가 관리자인지 확인
   const isAdmin = user?.isAdmin || false;
+  
+  // 현재 사용자가 체육관대관자인지 확인
+  const isGymOwner = user?.userType === 'GYM_OWNER';
 
   // 초기 로드 시 사용자 정보 확인 및 관리자 계정 생성
   useEffect(() => {
@@ -84,44 +92,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         // 관리자 계정 확인 및 생성
         const adminExists = users.some(u => u.email === ADMIN_EMAIL && u.isAdmin);
+        
         if (!adminExists) {
-          // 관리자 계정이 없으면 생성
+          // 관리자 계정 생성
           const adminUser: User = {
-            id: 'admin-' + Date.now(),
+            id: 'admin-id',
             email: ADMIN_EMAIL,
-            name: '관리자',
             password: ADMIN_PASSWORD,
+            name: '관리자',
             createdAt: new Date().toISOString(),
-            isAdmin: true
+            isAdmin: true,
+            userType: 'ADMIN' // 관리자 타입
           };
           
           users.push(adminUser);
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-          console.log('관리자 계정이 생성되었습니다:', adminUser.email);
         }
       } catch (error) {
-        console.error('Authentication check failed:', error);
+        console.error('Error initializing auth context:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
+    
     checkAuth();
   }, []);
 
-  // 사용자 목록 가져오기
-  const getUsers = (): Omit<User, 'password'>[] => {
+  // 모든 사용자 목록 가져오기 (비밀번호 제외)
+  const getUsers = () => {
     try {
       const usersString = localStorage.getItem(USERS_STORAGE_KEY);
-      if (usersString) {
-        const users: User[] = JSON.parse(usersString);
-        // 비밀번호 필드는 제외하고 반환
-        return users.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
-      }
+      if (!usersString) return [];
+      
+      const users: User[] = JSON.parse(usersString);
+      return users.map(({ password, ...rest }) => rest);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error getting users:', error);
+      return [];
     }
-    return [];
   };
 
   // 로그인 함수
@@ -164,7 +172,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // 회원가입 함수
-  const signup = async (userData: { email: string; password: string; name: string; phone?: string }) => {
+  const signup = async (userData: { email: string; password: string; name: string; phone?: string; userType: UserType }) => {
     setIsLoading(true);
     try {
       // 로컬 스토리지에서 사용자 목록 가져오기
@@ -180,7 +188,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('이미 사용 중인 이메일입니다.');
       }
       
-      // 새 사용자 생성 (일반 사용자로 기본 설정)
+      // 새 사용자 생성
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9), // 임시 ID 생성, 실제로는 서버에서 생성된 ID 사용
         email: userData.email,
@@ -188,7 +196,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password: userData.password, // 실제로는 서버에서 암호화하여 저장
         phone: userData.phone,
         createdAt: new Date().toISOString(),
-        isAdmin: userData.email === ADMIN_EMAIL // admin 계정인 경우 관리자 권한 부여
+        isAdmin: userData.email === ADMIN_EMAIL, // admin 계정인 경우 관리자 권한 부여
+        userType: userData.email === ADMIN_EMAIL ? 'ADMIN' : userData.userType // 사용자 타입 설정
       };
       
       // 사용자 목록에 추가
@@ -213,13 +222,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isAuthenticated: !!user,
     isLoading,
     isAdmin,
+    isGymOwner,
     login,
     logout,
     signup,
     getUsers,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthProvider; 

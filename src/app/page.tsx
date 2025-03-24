@@ -1,7 +1,37 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "./contexts/AuthContext";
 
 export default function Home() {
+  const router = useRouter();
+  const { user, isAuthenticated, isAdmin, isGymOwner } = useAuth();
+
+  // 사용자 타입에 따라 적절한 페이지로 리디렉션
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (isAdmin) {
+        router.push('/admin');
+      } else if (isGymOwner) {
+        router.push('/gym-owner');
+      } else {
+        router.push('/gym-user');
+      }
+    }
+  }, [isAuthenticated, isAdmin, isGymOwner, router]);
+  
+  // 로그인되지 않은 사용자에게만 메인 페이지 표시
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50">
       {/* 히어로 섹션 */}
@@ -21,18 +51,18 @@ export default function Home() {
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
                     <Link
-                      href="/courts"
+                      href="/auth/login"
                       className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
                     >
-                      코트 찾기
+                      로그인하기
                     </Link>
                   </div>
                   <div className="mt-3 sm:mt-0 sm:ml-3">
                     <Link
-                      href="/my-bookings"
+                      href="/auth/signup"
                       className="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
                     >
-                      내 예약 확인
+                      회원가입
                     </Link>
                   </div>
                 </div>
