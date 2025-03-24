@@ -40,10 +40,19 @@ export default function ReservationPage({ params }: PageProps) {
   const [newBookings, setNewBookings] = useState<any[]>([]);
   const [court, setCourt] = useState<Court | undefined>(undefined);
   const [isCourtLoading, setIsCourtLoading] = useState(true);
-  const [courtId, setCourtId] = useState<string>(params.id as string);
+  const [courtId, setCourtId] = useState<string>('');
+  
+  // 컴포넌트 마운트 시 params에서 id 추출
+  useEffect(() => {
+    if (params && typeof params === 'object' && 'id' in params) {
+      setCourtId(params.id as string);
+    }
+  }, [params]);
   
   // 코트 정보 로드
   useEffect(() => {
+    if (!courtId) return;
+    
     const foundCourt = MOCK_COURTS.find((c: Court) => c.id === courtId);
     setCourt(foundCourt);
     setIsCourtLoading(false);
@@ -289,7 +298,7 @@ export default function ReservationPage({ params }: PageProps) {
               <h3 className="text-lg font-medium text-gray-900">선택된 시간</h3>
               <button
                 onClick={handleClearSelectedRanges}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-gray-600 hover:text-gray-800 font-medium"
               >
                 모두 삭제
               </button>
@@ -301,16 +310,16 @@ export default function ReservationPage({ params }: PageProps) {
                   className="flex items-center justify-between bg-blue-50 p-3 rounded-md"
                 >
                   <div>
-                    <span className="font-medium">
+                    <span className="font-semibold text-gray-800">
                       {format(range.startDate, 'M월 d일', { locale: ko })} {range.startHour}:00 - {range.endHour}:00
                     </span>
-                    <span className="ml-3 text-gray-600">
+                    <span className="ml-3 text-gray-700">
                       ({range.endHour - range.startHour}시간, {((range.endHour - range.startHour) * court.price).toLocaleString()}원)
                     </span>
                   </div>
                   <button
                     onClick={() => handleRemoveTimeRange(index)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-500 hover:text-gray-700"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -320,7 +329,7 @@ export default function ReservationPage({ params }: PageProps) {
               ))}
             </div>
             <div className="mt-4 flex justify-between items-center">
-              <div className="text-xl font-bold">
+              <div className="text-xl font-bold text-gray-900">
                 총 결제 금액: {calculateTotalPrice().toLocaleString()}원
               </div>
               <button
@@ -419,7 +428,7 @@ export default function ReservationPage({ params }: PageProps) {
                   key={hour}
                   className="h-16 border-b border-gray-200"
                 >
-                  <div className="text-xs font-medium text-gray-500 text-right pr-4 -mt-2">
+                  <div className="text-xs font-medium text-gray-600 text-right pr-4 -mt-2">
                     {hour}:00
                   </div>
                 </div>
@@ -443,7 +452,7 @@ export default function ReservationPage({ params }: PageProps) {
                       onMouseUp={handleDragEnd}
                       className={"h-16 border-b border-gray-200 relative group transition-colors " + 
                         (isPast
-                          ? 'bg-gray-50 cursor-not-allowed'
+                          ? 'bg-gray-100 cursor-not-allowed'
                           : isBooked
                           ? 'bg-blue-50 cursor-not-allowed'
                           : isSelected
@@ -451,7 +460,7 @@ export default function ReservationPage({ params }: PageProps) {
                           : 'hover:bg-blue-50 cursor-pointer')}
                     >
                       {/* 30분 구분선 */}
-                      <div className="absolute w-full border-t border-gray-100 top-1/2 pointer-events-none"></div>
+                      <div className="absolute w-full border-t border-gray-200 top-1/2 pointer-events-none"></div>
                       
                       {isBooked && (
                         <div className="absolute inset-0 p-1">
@@ -464,7 +473,7 @@ export default function ReservationPage({ params }: PageProps) {
 
                       {!isBooked && !isPast && !isSelected && (
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none">
-                          <div className="text-xs font-medium text-blue-600">
+                          <div className="text-xs font-medium text-white bg-blue-600 px-2 py-1 rounded">
                             드래그하여 예약
                           </div>
                         </div>
@@ -491,8 +500,8 @@ export default function ReservationPage({ params }: PageProps) {
         </div>
 
         {/* 드래그 가이드 */}
-        <div className="mt-4 bg-gray-50 p-3 rounded border border-gray-200 text-sm text-gray-600">
-          <strong className="text-gray-800">사용 방법:</strong> 드래그하여 여러 시간대를 선택할 수 있습니다. 같은 날짜 내에서만 연속 예약이 가능합니다.
+        <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-700">
+          <strong className="text-gray-900">사용 방법:</strong> 드래그하여 여러 시간대를 선택할 수 있습니다. 같은 날짜 내에서만 연속 예약이 가능합니다.
         </div>
       </div>
 
@@ -515,22 +524,22 @@ export default function ReservationPage({ params }: PageProps) {
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-gray-700 mb-2">예약 정보</h3>
+                  <h3 className="text-gray-800 font-medium mb-2">예약 정보</h3>
                   <div className="bg-gray-50 rounded p-3">
                     <div className="mb-2">
-                      <span className="font-medium">{court.name}</span>
+                      <span className="font-medium text-gray-900">{court.name}</span>
                     </div>
                     {selectedRanges.map((range, index) => (
-                      <div key={index} className="text-sm">
+                      <div key={index} className="text-sm text-gray-700">
                         {format(range.startDate, 'yyyy년 M월 d일', { locale: ko })} {range.startHour}:00 - {range.endHour}:00
-                        <span className="text-gray-500 ml-2">({range.endHour - range.startHour}시간)</span>
+                        <span className="text-gray-600 ml-2">({range.endHour - range.startHour}시간)</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-gray-700 mb-2">결제 수단</h3>
+                  <h3 className="text-gray-800 font-medium mb-2">결제 수단</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {PAYMENT_METHODS.map(method => (
                       <button
@@ -543,17 +552,17 @@ export default function ReservationPage({ params }: PageProps) {
                         } flex items-center`}
                       >
                         <span className="text-xl mr-2">{method.icon}</span>
-                        <span className="text-sm">{method.name}</span>
+                        <span className="text-sm text-gray-700">{method.name}</span>
                       </button>
                     ))}
                   </div>
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-gray-700 mb-2">결제 금액</h3>
+                  <h3 className="text-gray-800 font-medium mb-2">결제 금액</h3>
                   <div className="flex justify-between items-center text-lg">
-                    <span>총 결제 금액</span>
-                    <span className="font-bold">{calculateTotalPrice().toLocaleString()}원</span>
+                    <span className="text-gray-700">총 결제 금액</span>
+                    <span className="font-bold text-gray-900">{calculateTotalPrice().toLocaleString()}원</span>
                   </div>
                 </div>
                 
@@ -590,14 +599,14 @@ export default function ReservationPage({ params }: PageProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold mb-2">결제 완료</h2>
-                <p className="text-gray-600 mb-6">예약이 성공적으로 완료되었습니다.</p>
+                <h2 className="text-xl font-bold mb-2 text-gray-900">결제 완료</h2>
+                <p className="text-gray-700 mb-6">예약이 성공적으로 완료되었습니다.</p>
                 <div className="bg-gray-50 rounded p-4 text-left mb-4">
                   <div className="mb-2">
-                    <span className="font-medium">{court.name}</span>
+                    <span className="font-medium text-gray-900">{court.name}</span>
                   </div>
                   {selectedRanges.map((range, index) => (
-                    <div key={index} className="text-sm">
+                    <div key={index} className="text-sm text-gray-700">
                       {format(range.startDate, 'yyyy년 M월 d일', { locale: ko })} {range.startHour}:00 - {range.endHour}:00
                     </div>
                   ))}
@@ -605,7 +614,7 @@ export default function ReservationPage({ params }: PageProps) {
                     결제 금액: {calculateTotalPrice().toLocaleString()}원
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">확인 이메일이 발송되었습니다. 잠시 후 마이페이지로 이동합니다.</p>
+                <p className="text-sm text-gray-600">확인 이메일이 발송되었습니다. 잠시 후 마이페이지로 이동합니다.</p>
               </div>
             )}
           </div>
