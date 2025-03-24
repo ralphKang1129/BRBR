@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { UserType, useAuth } from '../../../contexts/AuthContext';
+import { UserType, useAuth, SignupData } from '../../../contexts/AuthContext';
 
 export default function UserInfoPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getUsers } = useAuth();
+  const { getUsers, signup } = useAuth();
   
   const userType = searchParams.get('userType') as UserType;
   const phone = searchParams.get('phone');
@@ -152,21 +152,32 @@ export default function UserInfoPage() {
     setErrors(prev => ({ ...prev, form: '' }));
     
     try {
-      // 회원가입 완료 페이지로 이동
-      // 실제로는 회원가입 API 호출 후 이동
-      const queryParams = new URLSearchParams({
-        userType,
-        phone: phone || '',
-        email: formData.email,
-        name: formData.name
-      });
-      
-      router.push(`/auth/signup/complete?${queryParams.toString()}`);
+      // 회원가입 처리
+      if (formData.email && formData.password && formData.name && phone) {
+        const signupData: SignupData = {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          phone: phone,
+          userType: 'GYM_USER'
+        };
+        
+        await signup(signupData);
+        
+        // 회원가입 완료 페이지로 이동
+        const queryParams = new URLSearchParams({
+          userType,
+          email: formData.email || '',
+          name: formData.name || ''
+        });
+        
+        router.push(`/auth/signup/complete?${queryParams.toString()}`);
+      }
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('Signup error:', error);
       setErrors(prev => ({
         ...prev,
-        form: error?.message || '오류가 발생했습니다. 다시 시도해주세요.',
+        form: error?.message || '회원가입에 실패했습니다. 다시 시도해주세요.',
       }));
       setIsLoading(false);
     }

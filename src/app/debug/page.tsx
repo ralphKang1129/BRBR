@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
 
 export default function DebugPage() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isGymOwner, logout } = useAuth();
   const [storage, setStorage] = useState<{
     localStorage: Record<string, any>;
     sessionStorage: Record<string, any>;
@@ -14,7 +14,7 @@ export default function DebugPage() {
     sessionStorage: {}
   });
 
-  useEffect(() => {
+  const refreshStorage = () => {
     if (typeof window !== 'undefined') {
       try {
         // 로컬 스토리지와 세션 스토리지 데이터 가져오기
@@ -31,10 +31,16 @@ export default function DebugPage() {
             currentUser: sessionCurrentUser ? JSON.parse(sessionCurrentUser) : null,
           }
         });
+        
+        console.log("스토리지 새로고침 완료");
       } catch (error) {
         console.error('스토리지 데이터 읽기 오류:', error);
       }
     }
+  };
+
+  useEffect(() => {
+    refreshStorage();
   }, []);
 
   const clearStorage = () => {
@@ -53,6 +59,12 @@ export default function DebugPage() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">디버그 페이지</h1>
             <div className="flex space-x-2">
+              <button
+                onClick={refreshStorage}
+                className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+              >
+                새로고침
+              </button>
               <Link
                 href="/"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
@@ -82,6 +94,12 @@ export default function DebugPage() {
                   <span className="text-gray-600 dark:text-gray-400">관리자 권한:</span>
                   <span className={isAdmin ? 'text-green-600' : 'text-gray-600'}>
                     {isAdmin ? '있음' : '없음'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">체육관 대관자:</span>
+                  <span className={isGymOwner ? 'text-green-600' : 'text-gray-600'}>
+                    {isGymOwner ? '예' : '아니오'}
                   </span>
                 </div>
                 {user && (
