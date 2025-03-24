@@ -32,18 +32,36 @@ export interface MyBooking {
   courtName: string;
   courtLocation: string;
   courtImageUrl: string;
+  gymName: string;
   date: string;
   startHour: number;
   endHour: number;
   price: number;
   status: 'confirmed' | 'pending' | 'cancelled';
   createdAt: string;
+  paymentMethod?: string; // 결제 수단 (카드, 카카오페이 등)
+  paymentId?: string;     // 결제 고유 ID
 }
 
 // 시간 슬롯 타입 정의
 export interface TimeSlot {
   date: Date;
   hour: number;
+}
+
+// 선택된 시간 범위 타입 정의
+export interface SelectedTimeRange {
+  startDate: Date;
+  startHour: number;
+  endDate: Date;
+  endHour: number;
+}
+
+// 결제 방법 타입 정의
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  icon: string;
 }
 
 // 코트 목록 (더미 데이터)
@@ -117,45 +135,118 @@ export const MOCK_BOOKINGS: Booking[] = [
   }
 ];
 
+// 결제 수단 목록
+export const PAYMENT_METHODS: PaymentMethod[] = [
+  { id: 'card', name: '신용/체크카드', icon: '💳' },
+  { id: 'kakao', name: '카카오페이', icon: '🟨' },
+  { id: 'naver', name: '네이버페이', icon: '🟩' },
+  { id: 'payco', name: '페이코', icon: '🟥' },
+  { id: 'toss', name: '토스', icon: '🔵' },
+];
+
 // 내 예약 목록 (더미 데이터)
-export const MOCK_MY_BOOKINGS: MyBooking[] = [
+export let MOCK_MY_BOOKINGS: MyBooking[] = [
   {
-    id: '1',
+    id: '1001',
     courtId: '1',
-    courtName: '강남 배드민턴 센터',
-    courtLocation: '강남구',
-    courtImageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    date: '2023-06-15',
-    startHour: 10,
-    endHour: 12,
+    courtName: '메인 코트 A',
+    courtLocation: '서울시 강남구 역삼동',
+    courtImageUrl: 'https://source.unsplash.com/random/800x600/?badminton',
+    gymName: '역삼 배드민턴장',
+    date: '2023-11-15',
+    startHour: 14,
+    endHour: 16,
     price: 30000,
     status: 'confirmed',
-    createdAt: '2023-06-01T12:00:00Z'
+    createdAt: '2023-11-10',
+    paymentMethod: 'card',
+    paymentId: 'pay_12345678'
   },
   {
-    id: '2',
+    id: '1002',
     courtId: '2',
-    courtName: '서초 스포츠 센터',
-    courtLocation: '서초구',
-    courtImageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    date: '2023-06-20',
-    startHour: 15,
-    endHour: 17,
-    price: 36000,
+    courtName: '전문가 코트 B',
+    courtLocation: '서울시 서초구 방배동',
+    courtImageUrl: 'https://source.unsplash.com/random/800x600/?sports',
+    gymName: '방배 스포츠 센터',
+    date: '2023-11-18',
+    startHour: 19,
+    endHour: 21,
+    price: 40000,
     status: 'pending',
-    createdAt: '2023-06-05T09:30:00Z'
+    createdAt: '2023-11-12',
+    paymentMethod: 'kakao',
+    paymentId: 'pay_23456789'
   },
   {
-    id: '3',
+    id: '1003',
     courtId: '3',
-    courtName: '송파 배드민턴 아카데미',
-    courtLocation: '송파구',
-    courtImageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    date: '2023-06-12',
-    startHour: 18,
-    endHour: 19,
-    price: 22000,
+    courtName: '일반 코트 C',
+    courtLocation: '서울시 송파구 잠실동',
+    courtImageUrl: 'https://source.unsplash.com/random/800x600/?court',
+    gymName: '잠실 체육관',
+    date: '2023-11-20',
+    startHour: 10,
+    endHour: 12,
+    price: 25000,
     status: 'cancelled',
-    createdAt: '2023-06-02T17:45:00Z'
+    createdAt: '2023-11-08',
+    paymentMethod: 'toss',
+    paymentId: 'pay_34567890'
   }
-]; 
+];
+
+// 새 예약 저장 함수
+export const saveBooking = (
+  courtId: string,
+  selectedRanges: SelectedTimeRange[],
+  paymentMethod: string
+): MyBooking[] => {
+  // 예약하려는 코트 정보 찾기
+  const court = MOCK_COURTS.find(c => c.id === courtId);
+  if (!court) {
+    throw new Error('코트 정보를 찾을 수 없습니다.');
+  }
+
+  // 선택한 범위에 대해 예약 생성
+  const newBookings: MyBooking[] = selectedRanges.map((range, index) => {
+    const totalHours = range.endHour - range.startHour;
+    const price = totalHours * court.price;
+    const bookingDate = format(range.startDate, 'yyyy-MM-dd');
+    
+    // 기존 예약 목록에 추가할 새 예약
+    const newBooking: MyBooking = {
+      id: 'new_' + Date.now().toString() + '_' + index,
+      courtId: court.id,
+      courtName: court.name,
+      courtLocation: court.location,
+      courtImageUrl: court.imageUrl,
+      gymName: '역삼 배드민턴장',
+      date: bookingDate,
+      startHour: range.startHour,
+      endHour: range.endHour,
+      price: price,
+      status: 'confirmed',
+      createdAt: new Date().toISOString(),
+      paymentMethod: paymentMethod,
+      paymentId: 'pay_' + Math.random().toString(36).substring(2, 15)
+    };
+    
+    // MOCK_BOOKINGS에도 추가
+    MOCK_BOOKINGS.push({
+      id: newBooking.id,
+      courtId: court.id,
+      date: bookingDate,
+      startHour: range.startHour,
+      endHour: range.endHour,
+      userName: '사용자'
+    });
+    
+    // MOCK_MY_BOOKINGS에도 추가
+    MOCK_MY_BOOKINGS.push(newBooking);
+    
+    return newBooking;
+  });
+  
+  return newBookings;
+}; 
