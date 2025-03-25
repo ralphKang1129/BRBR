@@ -173,6 +173,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           console.log('체육관 소유자 계정이 생성되었습니다:', gymOwnerUser);
         }
+        
+        // 체육관 사용자 계정 확인 및 생성
+        const GYM_USER_EMAIL = 'user';
+        const GYM_USER_PASSWORD = 'user';
+        const gymUserExists = users.some(u => u.email === GYM_USER_EMAIL && u.userType === 'GYM_USER');
+        
+        if (!gymUserExists) {
+          // 체육관 사용자 계정 생성
+          const gymUserAccount: User = {
+            id: 'gym-user-id',
+            email: GYM_USER_EMAIL,
+            password: GYM_USER_PASSWORD,
+            name: '체육관 사용자',
+            phone: '010-9876-5432',
+            createdAt: new Date().toISOString(),
+            isAdmin: false,
+            userType: 'GYM_USER'
+          };
+          
+          users.push(gymUserAccount);
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+          
+          console.log('체육관 사용자 계정이 생성되었습니다:', gymUserAccount);
+        }
       } catch (error) {
         console.error('Error initializing auth context:', error);
       } finally {
@@ -201,6 +225,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string, rememberMe: boolean = false) => {
     setIsLoading(true);
     try {
+      console.log("로그인 시도:", { email, password: '********' });
+      
+      // 관리자 계정 직접 검사
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        console.log("관리자 로그인 성공");
+        const adminUser: User = {
+          id: 'admin-id',
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+          name: '관리자',
+          createdAt: new Date().toISOString(),
+          isAdmin: true,
+          userType: 'ADMIN'
+        };
+
+        // 비밀번호를 제외한 사용자 정보 저장
+        const { password: _, ...userWithoutPassword } = adminUser;
+        
+        // 로그인 상태 유지 설정에 따라 저장 방식 결정
+        if (rememberMe) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
+          sessionStorage.removeItem(USER_STORAGE_KEY);
+        } else {
+          sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
+          localStorage.removeItem(USER_STORAGE_KEY);
+        }
+        
+        setUser(userWithoutPassword);
+        setIsAuthenticated(true);
+        return;
+      }
+      
       // 로컬 스토리지에서 사용자 목록 가져오기
       const usersString = localStorage.getItem(USERS_STORAGE_KEY);
       if (!usersString) {
@@ -208,15 +264,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const users: User[] = JSON.parse(usersString);
+      console.log("로그인 시도 시 사용자 목록:", users.map(u => ({ email: u.email, userType: u.userType })));
       
       // 이메일과 비밀번호가 일치하는 사용자 찾기
       const foundUser = users.find(u => u.email === email && u.password === password);
       
       if (!foundUser) {
+        console.error("로그인 실패: 사용자를 찾을 수 없음", { email });
         throw new Error('이메일/아이디 또는 비밀번호가 올바르지 않습니다.');
       }
       
-      console.log("로그인 사용자:", foundUser);
+      console.log("로그인 성공:", { email: foundUser.email, userType: foundUser.userType, isAdmin: foundUser.isAdmin });
       
       // 비밀번호를 제외한 사용자 정보 저장
       const { password: _, ...userWithoutPassword } = foundUser;

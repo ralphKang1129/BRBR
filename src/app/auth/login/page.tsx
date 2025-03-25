@@ -56,18 +56,17 @@ export default function LoginPage() {
     let valid = true;
     const newErrors = { ...errors };
 
-    // 관리자 계정은 이메일 형식 검사에서 제외
-    if (formData.email === 'admin') {
-      // admin 계정은 이메일 검사를 건너뜀
-    } else if (!formData.email) {
-      newErrors.email = '이메일을 입력해주세요';
+    // 입력값 확인
+    if (!formData.email.trim()) {
+      newErrors.email = '이메일 또는 아이디를 입력해주세요';
       valid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (formData.email !== 'admin' && formData.email !== 'gym_owner' && formData.email !== 'user' && !/\S+@\S+\.\S+/.test(formData.email)) {
+      // admin, gym_owner, user 계정은 이메일 형식 검사에서 제외
       newErrors.email = '올바른 이메일 형식이 아닙니다';
       valid = false;
     }
 
-    if (!formData.password) {
+    if (!formData.password.trim()) {
       newErrors.password = '비밀번호를 입력해주세요';
       valid = false;
     }
@@ -85,15 +84,25 @@ export default function LoginPage() {
     setErrors({ ...errors, form: '' });
 
     try {
+      console.log("로그인 시도 중:", { email: formData.email, rememberMe });
       await login(formData.email, formData.password, rememberMe);
+      console.log("로그인 성공!");
       
       // 로그인 성공 시 홈으로 이동
       router.push('/');
     } catch (error: any) {
       console.error('Login error:', error);
+      
+      // 더 자세한 오류 메시지 표시
+      let errorMessage = '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       setErrors((prev) => ({
         ...prev,
-        form: error?.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.',
+        form: errorMessage,
       }));
     } finally {
       setIsLoading(false);
@@ -250,6 +259,28 @@ export default function LoginPage() {
                 회원가입
               </Link>
             </p>
+          </div>
+          
+          {/* 테스트 계정 정보 추가 */}
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">테스트 계정:</p>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <p className="text-gray-700 dark:text-gray-300 font-medium">관리자:</p>
+                <p className="text-gray-600 dark:text-gray-400">ID: admin</p>
+                <p className="text-gray-600 dark:text-gray-400">PW: admin</p>
+              </div>
+              <div>
+                <p className="text-gray-700 dark:text-gray-300 font-medium">체육관 대관자:</p>
+                <p className="text-gray-600 dark:text-gray-400">ID: gym_owner</p>
+                <p className="text-gray-600 dark:text-gray-400">PW: gym_owner</p>
+              </div>
+              <div>
+                <p className="text-gray-700 dark:text-gray-300 font-medium">체육관 사용자:</p>
+                <p className="text-gray-600 dark:text-gray-400">ID: user</p>
+                <p className="text-gray-600 dark:text-gray-400">PW: user</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
