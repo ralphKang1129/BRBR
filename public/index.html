@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>배드민턴 코트 예약 시스템</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9fafb;
+      color: #111827;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    .hero {
+      text-align: center;
+      padding: 3rem 0;
+    }
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      font-size: 1.25rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+    .button {
+      display: inline-block;
+      background-color: #2563eb;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .button:hover {
+      background-color: #1d4ed8;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .feature {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .feature-title {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      color: #111827;
+    }
+    .feature-desc {
+      color: #6b7280;
+      line-height: 1.5;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding: 2rem 0;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <h1 class="title">배드민턴 코트 예약 시스템</h1>
+      <p class="subtitle">쉽고 빠른 배드민턴 코트 예약 서비스</p>
+      <a href="/auth/login" class="button">로그인</a>
+    </header>
+
+    <div class="features">
+      <div class="feature">
+        <h2 class="feature-title">쉬운 예약</h2>
+        <p class="feature-desc">몇 번의 클릭만으로 원하는 시간에 코트를 예약할 수 있습니다.</p>
+      </div>
+      <div class="feature">
+        <h2 class="feature-title">코트 검색</h2>
+        <p class="feature-desc">위치, 가격, 시설 등 다양한 조건으로 원하는 코트를 찾아보세요.</p>
+      </div>
+      <div class="feature">
+        <h2 class="feature-title">예약 관리</h2>
+        <p class="feature-desc">예약 내역을 쉽게 확인하고 취소할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2024 배드민턴 코트 예약 시스템. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html> 

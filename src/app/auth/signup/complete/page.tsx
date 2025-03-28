@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserType } from '../../../contexts/AuthContext';
 
-export default function SignupCompletePage() {
+function CompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -14,7 +14,7 @@ export default function SignupCompletePage() {
   const name = searchParams.get('name');
   
   // 파라미터가 없으면 첫 페이지로 리디렉션
-  useEffect(() => {
+  React.useEffect(() => {
     if (!userType || !email || !name) {
       router.push('/auth/signup');
     }
@@ -79,5 +79,13 @@ export default function SignupCompletePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CompletePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CompleteContent />
+    </Suspense>
   );
 } 

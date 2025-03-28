@@ -1,11 +1,12 @@
 'use client';
 
+import React, { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserType } from '../../../contexts/AuthContext';
 
-export default function PhoneVerificationPage() {
+function PhoneVerificationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userType = searchParams.get('userType') as UserType;
@@ -304,5 +305,13 @@ export default function PhoneVerificationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PhoneVerificationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PhoneVerificationForm />
+    </Suspense>
   );
 } 

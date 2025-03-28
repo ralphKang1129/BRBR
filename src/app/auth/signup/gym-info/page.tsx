@@ -1,11 +1,12 @@
 'use client';
 
+import React, { Suspense } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserType, useAuth, SignupData } from '../../../contexts/AuthContext';
 
-export default function GymInfoPage() {
+function GymInfoForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signup } = useAuth();
@@ -320,5 +321,13 @@ export default function GymInfoPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GymInfoPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <GymInfoForm />
+    </Suspense>
   );
 } 
